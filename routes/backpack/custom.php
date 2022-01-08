@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BulkUploadController;
 use Illuminate\Support\Facades\Route;
 
 // --------------------------
@@ -16,4 +17,11 @@ Route::group([
     ),
     'namespace'  => 'App\Http\Controllers\Admin',
 ], function () { // custom admin routes
+    Route::crud('state', 'StateCrudController');
+
+    // BulkUpload
+    Route::prefix('/bulk-upload')->name('bulk-upload.')->group(function () {
+        Route::get('/', [BulkUploadController::class, 'index'])->name('index');
+        Route::post('/', [BulkUploadController::class, 'upload'])->name('upload');
+    });
 }); // this should be the absolute last line of this file
