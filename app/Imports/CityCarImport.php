@@ -21,6 +21,8 @@ class CityCarImport implements ToCollection
 
         $cityString = $this->getCityFromString($header[0]);
 
+        if (!$cityString) return false;
+
         $city = City::create(['name' => $cityString, 'state_id' => 1]);
 
         if (!$city = City::where('name', $cityString)->first()) {

@@ -24,4 +24,8 @@ Route::group([
         Route::get('/', [BulkUploadController::class, 'index'])->name('index');
         Route::post('/', [BulkUploadController::class, 'upload'])->name('upload');
     });
+    Route::crud('model', 'ModelCrudController');
+    Route::crud('car', 'CarCrudController');
+    Route::crud('brand', 'BrandCrudController');
+    Route::crud('city', 'CityCrudController');
 }); // this should be the absolute last line of this file
