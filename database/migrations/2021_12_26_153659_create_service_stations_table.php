@@ -15,6 +15,9 @@ class CreateServiceStationsTable extends Migration
     {
         Schema::create('service_stations', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('city_id')->constrained('cities');
+            $table->string('name');
+            $table->string('code')->nullable()->unique();
             $table->timestamps();
         });
     }
