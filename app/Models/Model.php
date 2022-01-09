@@ -34,6 +34,10 @@ class Model extends ModelEloquent
     | RELATIONS
     |--------------------------------------------------------------------------
     */
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
+    }
 
     /*
     |--------------------------------------------------------------------------
