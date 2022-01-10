@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\City;
 use App\Models\Brand;
 use App\Models\Model;
 use App\Http\Requests\CarRequest;
@@ -97,6 +98,13 @@ class CarCrudController extends CrudController
             'name' => 'city_string',
             'label' => 'Ciudad / Municipio',
             'type' => 'text',
+            'orderable' => true,
+            'orderLogic' => function ($query, $column, $columnDirection) {
+                return $query->leftJoin('city_cars', 'city_cars.car_id', '=', 'cars.id')
+                    ->leftJoin('cities', 'cities.id', '=', 'city_cars.city_id')
+                    ->select('cars.*')
+                    ->orderBy('cities.name', $columnDirection);
+            },
         ]);
     }
 
@@ -129,6 +137,22 @@ class CarCrudController extends CrudController
             },
                 function ($value) {
                 $this->crud->addClause('where', 'model_id', $value);
+            }
+        );
+
+        CRUD::addFilter(
+            [
+                'name' => 'city',
+                'label' => 'Ciudad / Municipio',
+                'type' => 'select2',
+            ],
+                function () {
+                return City::orderBy('name')->get()->pluck('name', 'id')->toArray();
+            },
+                function ($value) {
+                $this->crud->addClause('whereHas', 'cities', function ($query) use ($value) {
+                    return $query->where('id', $value);
+                });
             }
         );
     }
