@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\Brand;
+use App\Models\Model;
 use App\Http\Requests\CarRequest;
 use Backpack\CRUD\app\Http\Controllers\CrudController;
 use Backpack\CRUD\app\Library\CrudPanel\CrudPanelFacade as CRUD;
@@ -28,7 +30,7 @@ class CarCrudController extends CrudController
     {
         CRUD::setModel(\App\Models\Car::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/car');
-        CRUD::setEntityNameStrings('car', 'cars');
+        CRUD::setEntityNameStrings('auto', 'autos');
     }
 
     /**
@@ -39,19 +41,94 @@ class CarCrudController extends CrudController
      */
     protected function setupListOperation()
     {
-        CRUD::column('created_at');
-        CRUD::column('id');
-        CRUD::column('license_plate');
-        CRUD::column('model_id');
-        CRUD::column('owners_name');
-        CRUD::column('owners_uid');
-        CRUD::column('updated_at');
+        $this->setColumns();
 
-        /**
-         * Columns can be defined using the fluent syntax or array syntax:
-         * - CRUD::column('price')->type('number');
-         * - CRUD::addColumn(['name' => 'price', 'type' => 'number']); 
-         */
+        $this->setFilters();
+    }
+
+    private function setColumns()
+    {
+        CRUD::addColumn([
+            'name' => 'license_plate',
+            'label' => 'Placa',
+            'type' => 'text',
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'owners_uid',
+            'label' => 'Cedula',
+            'type' => 'text',
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'owners_name',
+            'label' => 'Propietario',
+            'type' => 'text',
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'model.brand.name',
+            'label' => 'Marca',
+            'type' => 'text',
+            'orderable' => true,
+            'orderLogic' => function ($query, $column, $columnDirection) {
+                return $query->leftJoin('models', 'models.id', '=', 'cars.model_id')
+                    ->leftJoin('brands', 'brands.id', '=', 'models.brand_id')
+                    ->select('cars.*')
+                    ->orderBy('brands.name', $columnDirection);
+            },
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'model.name',
+            'label' => 'Modelo',
+            'type' => 'text',
+            'orderable' => true,
+            'orderLogic' => function ($query, $column, $columnDirection) {
+                return $query->leftJoin('models', 'models.id', '=', 'cars.model_id')
+                    ->select('cars.*')
+                    ->orderBy('models.name', $columnDirection);
+            },
+        ]);
+
+        CRUD::addColumn([
+            'name' => 'city_string',
+            'label' => 'Ciudad / Municipio',
+            'type' => 'text',
+        ]);
+    }
+
+    private function setFilters()
+    {
+        CRUD::addFilter(
+            [
+                'name' => 'brand',
+                'label' => 'Marca',
+                'type' => 'select2',
+            ],
+                function () {
+                return Brand::orderBy('name')->get()->pluck('name', 'id')->toArray();
+            },
+                function ($value) {
+                $this->crud->addClause('whereHas', 'model', function ($query) use ($value) {
+                    return $query->where('brand_id', $value);
+                });
+            }
+        );
+
+        CRUD::addFilter(
+            [
+                'name' => 'model',
+                'label' => 'Modelo',
+                'type' => 'select2',
+            ],
+                function () {
+                return Model::orderBy('name')->get()->pluck('name', 'id')->toArray();
+            },
+                function ($value) {
+                $this->crud->addClause('where', 'model_id', $value);
+            }
+        );
     }
 
     /**
