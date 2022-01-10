@@ -8,10 +8,27 @@ use App\Models\Brand;
 use App\Models\Model;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Session;
+use Maatwebsite\Excel\Events\AfterImport;
+use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\ToCollection;
 
 class CityCarImport implements ToCollection
 {
+    private $carsCount = 0;
+    
+    private $newCarsCount = 0;
+
+    public function getCarsCount()
+    {
+        return $this->carsCount;
+    }
+
+    public function getNewCarsCount()
+    {
+        return $this->newCarsCount;
+    }
+
     /**
     * @param Collection $rows
     */
@@ -23,16 +40,17 @@ class CityCarImport implements ToCollection
 
         if (!$cityString) return false;
 
-        $city = City::create(['name' => $cityString, 'state_id' => 1]);
-
         if (!$city = City::where('name', $cityString)->first()) {
             $city = City::create([
                 'name' => $cityString,
                 'code' => Str::slug($cityString, '-', 'es'),
+                'state_id' => 1,
             ]);
         };
 
         $dataRows = $rows->splice(3);
+
+        $this->carsCount = $dataRows->count();
 
         foreach ($dataRows as $row) {
 
@@ -64,6 +82,8 @@ class CityCarImport implements ToCollection
                     'owners_uid' => $row[4],
                     'model_id' => $model->id,
                 ]);
+
+                $this->newCarsCount++;
             }
 
             $car->cities()->attach($city);
@@ -72,12 +92,12 @@ class CityCarImport implements ToCollection
 
     private function getCityFromString(string $string)
     {
-        $start = strpos($string, 'Municipio: ') + strlen('Municipio:');
+        $start = strpos($string, 'Municipio: ') + 11;
 
-        $end = strpos($string, '| Grupo', $start);
+        $end = strpos($string, ' | Grupo', $start);
 
-        $city = mb_substr($string, $start, $end - $start - 3, 'UTF-8');
+        $city = substr($string, $start, $end - $start);
 
-        return $city;
+        return trim($city);
     }
 }

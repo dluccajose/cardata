@@ -31,6 +31,8 @@ class CarCrudController extends CrudController
         CRUD::setModel(\App\Models\Car::class);
         CRUD::setRoute(config('backpack.base.route_prefix') . '/car');
         CRUD::setEntityNameStrings('auto', 'autos');
+
+        $this->crud->denyAccess('show');
     }
 
     /**

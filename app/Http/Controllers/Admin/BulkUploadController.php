@@ -6,9 +6,14 @@ use Illuminate\Http\Request;
 use App\Imports\CityCarImport;
 use App\Http\Controllers\Controller;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Session;
+use Maatwebsite\Excel\Events\AfterImport;
+use Maatwebsite\Excel\Concerns\WithEvents;
 
 class BulkUploadController extends Controller
 {
+
+
     function index()
     {
         return view('admin.bulk-upload.index');
@@ -16,12 +21,27 @@ class BulkUploadController extends Controller
 
     function upload(Request $request)
     {
-        $files = $request->allFiles();
+        $files = $request->allFiles()['files'];
 
-        foreach ($files as $file) {
-            $results[]  = Excel::import(new CityCarImport, $file[0]);
+        $carsCount = 0;
+
+        $newCarsCount = 0;
+
+        foreach ($files as $i => $file) {
+            $citiyCarImport = new CityCarImport();
+            
+            Excel::import($citiyCarImport, $file);
+
+            $carsCount += $citiyCarImport->getCarsCount();
+
+            $newCarsCount += $citiyCarImport->getNewCarsCount();
         }
 
-        dd($results);
+        Session::flash('bulkupload.success', [
+            'carsCount' => $carsCount,
+            'newCarsCount' => $newCarsCount,
+        ]);
+
+        return redirect()->route('bulk-upload.index');
     }
 }
