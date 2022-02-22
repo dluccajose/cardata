@@ -82,11 +82,11 @@ class CityCarImport implements ToCollection
                     'owners_uid' => $row[4],
                     'model_id' => $model->id,
                 ]);
+                
+                $car->cities()->attach($city);
 
                 $this->newCarsCount++;
             }
-
-            $car->cities()->attach($city);
         } 
     }
 
